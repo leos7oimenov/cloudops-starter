@@ -4,6 +4,24 @@ services:
     container_name: cloudops-app
     expose:
       - "5000"
+    environment:
+      DB_HOST: db
+      DB_NAME: cloudops
+      DB_USER: cloudops_user
+      DB_PASSWORD: cloudops_password
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: cloudops-postgres
+    environment:
+      POSTGRES_DB: cloudops
+      POSTGRES_USER: cloudops_user
+      POSTGRES_PASSWORD: cloudops_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
   nginx:
@@ -16,3 +34,6 @@ services:
     depends_on:
       - web
     restart: unless-stopped
+
+volumes:
+  postgres_data:
