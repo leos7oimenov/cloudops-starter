@@ -1,12 +1,12 @@
 # CloudOps Starter
 
-A beginner DevOps project that demonstrates how to build and run a containerised Python Flask web application on an Ubuntu Server VM using Docker, Docker Compose, and Nginx.
+A beginner DevOps project that demonstrates how to build and run a containerised Python Flask web application on an Ubuntu Server VM using Docker, Docker Compose, Nginx, and PostgreSQL.
 
 ## Project Overview
 
-This project runs a simple Flask web application inside a Docker container. The app is deployed on an Ubuntu Server virtual machine created with VMware Workstation Pro.
+This project runs a simple Flask web application inside a Docker-based multi-container stack. The app is deployed on an Ubuntu Server virtual machine created with VMware Workstation Pro.
 
-The project is being developed in stages to practise core DevOps skills including Linux, SSH, Docker, Docker Compose, reverse proxying, container networking, health checks, Git, and GitHub.
+The project is being developed in stages to practise core DevOps skills including Linux, SSH, Docker, Docker Compose, reverse proxying, container networking, databases, persistent volumes, health checks, Git, and GitHub.
 
 ## Project Versions
 
@@ -43,7 +43,7 @@ This makes the project easier to run, repeat, and expand with more services late
 
 In version 3, an Nginx container was added as a reverse proxy.
 
-Instead of accessing the Flask app directly on port `5000`, traffic now flows through Nginx on port `80`.
+Instead of accessing the Flask app directly on port `5000`, traffic flows through Nginx on port `80`.
 
 ```text
 User / curl / browser
@@ -55,6 +55,26 @@ Flask app container on internal port 5000
 
 This creates a more realistic multi-container deployment pattern, similar to how applications are commonly exposed in production environments.
 
+### v4 - PostgreSQL Database Integration
+
+In version 4, a PostgreSQL database container was added to make the application stateful.
+
+The Flask app now connects to PostgreSQL using environment variables defined in `docker-compose.yml`. It can create and retrieve simple task records through API endpoints.
+
+The full request flow is now:
+
+```text
+User / curl / browser
+        ↓
+Nginx reverse proxy
+        ↓
+Flask application container
+        ↓
+PostgreSQL database container
+```
+
+This stage demonstrates multi-container application architecture, container-to-container communication, database configuration, persistent Docker volumes, and basic API/database integration.
+
 ## Tech Stack
 
 - Ubuntu Server
@@ -62,6 +82,7 @@ This creates a more realistic multi-container deployment pattern, similar to how
 - Docker
 - Docker Compose
 - Nginx
+- PostgreSQL
 - Python
 - Flask
 - Git
@@ -74,10 +95,14 @@ This creates a more realistic multi-container deployment pattern, similar to how
 - Dockerfile for containerisation
 - Docker Compose service definition
 - Nginx reverse proxy
+- PostgreSQL database container
 - Multi-container deployment
 - Internal Docker networking
-- Port mapping through Nginx
-- Health check endpoint
+- Persistent Docker volume for database data
+- Environment-based database configuration
+- Health check endpoint with database connectivity check
+- API endpoint to create tasks
+- API endpoint to retrieve tasks
 - GitHub repository with project documentation
 
 ## Project Structure
@@ -97,8 +122,12 @@ cloudops-starter/
 
 When running through Nginx:
 
-- `/` returns a welcome message
-- `/health` returns application health status
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/` | Returns a welcome message |
+| GET | `/health` | Checks app and database connectivity |
+| GET | `/tasks` | Returns saved tasks from PostgreSQL |
+| POST | `/tasks` | Creates a new task in PostgreSQL |
 
 ## Run with Docker Compose
 
@@ -139,7 +168,35 @@ curl http://localhost/health
 Expected health response:
 
 ```json
-{"status":"ok"}
+{"database":"connected","status":"ok"}
+```
+
+## Create a Task
+
+```bash
+curl -X POST http://localhost/tasks \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Learn Docker Compose with PostgreSQL"}'
+```
+
+Example response:
+
+```json
+{"id":1,"title":"Learn Docker Compose with PostgreSQL"}
+```
+
+## View Tasks
+
+```bash
+curl http://localhost/tasks
+```
+
+Example response:
+
+```json
+[
+  {"id":1,"title":"Learn Docker Compose with PostgreSQL"}
+]
 ```
 
 ## Useful Docker Commands
@@ -156,16 +213,22 @@ Check all containers:
 docker ps -a
 ```
 
-View logs for the Flask app:
+View Flask app logs:
 
 ```bash
 docker logs cloudops-app
 ```
 
-View logs for Nginx:
+View Nginx logs:
 
 ```bash
 docker logs cloudops-nginx
+```
+
+View PostgreSQL logs:
+
+```bash
+docker logs cloudops-postgres
 ```
 
 View Docker Compose logs:
@@ -200,13 +263,17 @@ docker compose down
 - How Docker Compose services communicate using service names
 - How to configure Nginx as a reverse proxy
 - How to route traffic from port 80 to an internal application container
+- How to add PostgreSQL as a database container
+- How to use environment variables for database configuration
+- How to persist database data using Docker volumes
+- How to create and retrieve records through API endpoints
 - How to commit and push a DevOps project to GitHub
 
 ## Next Improvements
 
-- Add PostgreSQL database
-- Add environment variables
+- Add a `.env` file for cleaner environment variable management
 - Add GitHub Actions CI pipeline
+- Add automated Docker image build
 - Add Prometheus and Grafana monitoring
 - Add basic security scanning
 - Add AWS/Terraform deployment later
